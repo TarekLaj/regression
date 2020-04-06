@@ -8,7 +8,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_validate
 from sklearn.svm import SVR
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import RandomizedSearchCV, permutation_test_score
+
 
 def GetModel(regname=None,optimisation=False,cv=None):
     if regname.lower()=='lasso':
@@ -59,14 +60,28 @@ def GetModel(regname=None,optimisation=False,cv=None):
     return regressor
 
 
-def MakeRegression(model=[],X=[],y=[],inner_cv=None,outer_cv=None,feat_selection=False):
-    if inner_cv==None:
-
-        scores = cross_validate(model, X, y, cv=outer_cv,
+def MakeRegression(model=[],X=[],y=[],
+                   inner_cv=None,outer_cv=None,
+                   feat_selection=False,
+                   stat=False,nperms=None,
+                   njobs=1):
+    permutation_scores,pvalue=[],[]
+    if feat_selection==False:
+        if stat == False:
+            scores = cross_validate(model, X, y, cv=outer_cv,
                                 scoring=('r2', 'neg_mean_squared_error'),
                                 return_train_score=True)
+        else:
+            scores,permutation_scores,pvalue=permutation_test_score(model,
+                                                                   X,
+                                                                   y,
+                                                                   scoring="r2",
+                                                                   cv=outer_cv,
+                                                                   n_permutations=nperms,
+                                                                   n_jobs=njobs)
     else:
         scores = cross_validate(model, X, y, cv=outer_cv,
                                 scoring=('r2', 'neg_mean_squared_error'),
                                 return_train_score=True)
-    return scores
+
+    return scores,permutation_scores,pvalue
