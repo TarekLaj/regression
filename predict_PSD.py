@@ -8,7 +8,7 @@ from sklearn.model_selection import StratifiedKFold
 ######################## Load PSD and csv files ################################
 
 data_path=os.getcwd()
-save_path=os.path.join(data_path,'Results')
+save_path=os.path.join(data_path,'Results','predict_PSD')
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 Psd_file=os.path.join(data_path,'PSD_100_ROIs.mat')
@@ -30,7 +30,7 @@ else:
 #target=df[target_name].tolist()
 regressor='Lasso'  # Regressor name
 inner_cv=10      # Inner cross validation used to optimise the model's params
-outer_cv=5       # Outer cv used to train and test data
+outer_cv=10       # Outer cv used to train and test data
 optimise=True    # Turn to True if you want to optimise the model
 FeatSelect=False # Set to True if you want to run feature selection
 Stat=True        #set stat to true to run permutation tests
@@ -61,6 +61,6 @@ for bdi,bd in enumerate(bandes):
         perm_sc.append(permutation_score)
         pvals.append(pvalue)
         print(score)
-    save_file=os.path.join(save_path,'predict_PSD','Res_100ROI_{b}_{reg}'.format(b=bd,
+    save_file=os.path.join(save_path,'Res_100ROI_{b}_{reg}'.format(b=bd,
                                                                         reg=regressor))
     sio.savemat(save_file,{'scores':scores,'perm_sc':perm_sc,'pvals':pvals})
