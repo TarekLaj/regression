@@ -4,7 +4,9 @@ import os
 import pandas as pd
 from regression_utils import MakeRegression,GetModel
 from sklearn.model_selection import StratifiedKFold
-
+import random
+import json
+random.seed(10)
 ######################## Load PSD and csv files ################################
 
 data_path=os.getcwd()
@@ -16,6 +18,7 @@ PSD_all_bands=sio.loadmat(Psd_file)['PSD']
 var_file=os.path.join(data_path,'data_N45_cortico_ITMTX.xls')
 df=pd.read_excel(var_file)
 X=df[['Age','Gender','ITMTX','Cortico']]
+
 ########################### Test On/off  #######################################
 
 test=True
@@ -28,11 +31,12 @@ else:
 
 #target_name='Radio'# Set the target name
 #target=df[target_name].tolist()
-regressor='Lasso'  # Regressor name
+regressor='lasso'  # Regressor name
 inner_cv=10      # Inner cross validation used to optimise the model's params
 outer_cv=10       # Outer cv used to train and test data
 optimise=True    # Turn to True if you want to optimise the model
 FeatSelect=False # Set to True if you want to run feature selection
+get_estimator=True #set it to True if you want to save all model results
 Stat=True        #set stat to true to run permutation tests
 n_perms=100     # set the number of permutation to run if stat= True
 # [float(i) for i in target]
@@ -45,22 +49,23 @@ for bdi,bd in enumerate(bandes):
     model=GetModel(regname=regressor,
                    optimisation=optimise,
                    cv=inner_cv)
-    scores,perm_sc,pvals=[],[],[]
+    result_all_roi=[]
     for roi in range(y.shape[1]):
         print('Predict ROI nb: {}'.format(str(roi)))
         data=X.values
         target=y[:,roi].astype(float)
-        score,permutation_score,pvalue=MakeRegression(model=model,
-                                                        X=data,
-                                                        y=y,
-                                                        inner_cv=inner_cv,
-                                                        outer_cv=outer_cv,
-                                                        stat=True,nperms=n_perms,
-                                                        njobs=-1)
-        scores.append(score)
-        perm_sc.append(permutation_score)
-        pvals.append(pvalue)
-        print(score)
-    save_file=os.path.join(save_path,'Res_100ROI_{b}_{reg}'.format(b=bd,
-                                                                        reg=regressor))
-    sio.savemat(save_file,{'scores':scores,'perm_sc':perm_sc,'pvals':pvals})
+
+        result=MakeRegression(model=model,
+                              X=data,
+                              y=target,
+                              inner_cv=inner_cv,
+                              outer_cv=outer_cv,
+                              stat=True,nperms=n_perms,
+                              get_estimator=get_estimator,
+                              njobs=-1)
+        result_all_roi.append(result)
+
+    save_file=os.path.join(save_path,'Res_100ROI_{b}_{reg}.mat'.format(b=bd,
+                                                                reg=regressor))
+    print('saving results for band {}'.format(bd))
+    sio.savemat(save_file,{'results_ROI':result_all_roi})
