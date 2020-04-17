@@ -31,14 +31,14 @@ else:
 
 #target_name='Radio'# Set the target name
 #target=df[target_name].tolist()
-regressor='lasso'  # Regressor name
-inner_cv=10      # Inner cross validation used to optimise the model's params
+regressor='ridge'  # Regressor name
+inner_cv=10       # Inner cross validation used to optimise the model's params
 outer_cv=10       # Outer cv used to train and test data
-optimise=True    # Turn to True if you want to optimise the model
-FeatSelect=False # Set to True if you want to run feature selection
+optimise=False     # Turn to True if you want to optimise the model
+FeatSelect=False  # Set to True if you want to run feature selection
 get_estimator=True #set it to True if you want to save all model results
 Stat=True        #set stat to true to run permutation tests
-n_perms=100     # set the number of permutation to run if stat= True
+n_perms=100    # set the number of permutation to run if stat= True
 # [float(i) for i in target]
 # print(type(target[0]))
 ########################### Run Regression #####################################
@@ -50,7 +50,7 @@ for bdi,bd in enumerate(bandes):
                    optimisation=optimise,
                    cv=inner_cv)
     result_all_roi=[]
-    for roi in range(y.shape[1]):
+    for roi in range(2):#(y.shape[1]):
         print('Predict ROI nb: {}'.format(str(roi)))
         data=X.values
         target=y[:,roi].astype(float)
@@ -60,10 +60,12 @@ for bdi,bd in enumerate(bandes):
                               y=target,
                               inner_cv=inner_cv,
                               outer_cv=outer_cv,
-                              stat=True,nperms=n_perms,
+                              stat=Stat,nperms=n_perms,
                               get_estimator=get_estimator,
                               njobs=-1)
         result_all_roi.append(result)
+
+
 
     save_file=os.path.join(save_path,'Res_100ROI_{b}_{reg}.mat'.format(b=bd,
                                                                 reg=regressor))
